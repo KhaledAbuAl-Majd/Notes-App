@@ -1,24 +1,19 @@
 <?php
 require_once 'config.php';
-session_start(); // لازم تبدأ الـ Session في أول الصفحة
-
+session_start(); 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user = mysqli_real_escape_string($conn, $_POST['username']);
     $pass = $_POST['password'];
 
-    // بنجيب البيانات بناءً على اسم المستخدم
     $sql = "SELECT * FROM Users WHERE UserName = '$user'";
     $result = mysqli_query($conn, $sql);
 
     if ($row = mysqli_fetch_assoc($result)) {
-        // بنقارن الباسورد اللي داخل باللي متشفر في القاعدة
         if (password_verify($pass, $row['Password'])) {
-            // لو صح، بنخزن بيانات اليوزر في الـ Session
             $_SESSION['user_id'] = $row['UserID'];
             $_SESSION['username'] = $row['UserName'];
             
-            // ونحوله لصفحة الملاحظات الرئيسية
-            header("Location: index.php");
+            header("Location: index.php");//to notes page: index.php
             exit();
         } else {
             $error = "Invalid password!";

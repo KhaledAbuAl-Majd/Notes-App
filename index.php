@@ -2,6 +2,7 @@
 require_once 'config.php';
 session_start();
 
+//check if session is not exist : transform it to login page to login again
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -9,17 +10,17 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// --- 1. إضافة أو تعديل نوت ---
+//add or update note
 if (isset($_POST['save_note'])) {
     $content = mysqli_real_escape_string($conn, $_POST['content']);
     $note_id = $_POST['note_id']; // هيكون فاضي لو إضافة، وفيه قيمة لو تعديل
 
     if (!empty($content)) {
         if (!empty($note_id)) {
-            // عملية تعديل (Update)
+            // (Update)
             $sql = "UPDATE Notes SET Content = '$content' WHERE NoteID = $note_id AND UserID = $user_id";
         } else {
-            // عملية إضافة (Insert)
+            //(Insert)
             $sql = "INSERT INTO Notes (Content, UserID) VALUES ('$content', '$user_id')";
         }
         mysqli_query($conn, $sql);
@@ -28,7 +29,7 @@ if (isset($_POST['save_note'])) {
     exit();
 }
 
-// --- 2. مسح نوت ---
+//delete note
 if (isset($_GET['delete'])) {
     $note_id = intval($_GET['delete']);
     $sql = "DELETE FROM Notes WHERE NoteID = $note_id AND UserID = $user_id";
@@ -36,7 +37,7 @@ if (isset($_GET['delete'])) {
     header("Location: index.php");
 }
 
-// --- 3. جلب الملاحظات ---
+// get notes
 $sql = "SELECT * FROM Notes WHERE UserID = $user_id ORDER BY NoteID DESC";
 $result = mysqli_query($conn, $sql);
 ?>
@@ -50,32 +51,29 @@ $result = mysqli_query($conn, $sql);
 <style>
     body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
     
-    /* تعديل الكارد عشان يستوعب المسح والنص صح */
     .note-card { 
         cursor: pointer; 
         border-radius: 12px; 
         border: none; 
         transition: 0.3s;
-        overflow: hidden; /* عشان مفيش حاجة تخرج بره */
+        overflow: hidden;
     }
     
     .note-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
     .note-content-preview {
         display: -webkit-box;
-        -webkit-line-clamp: 2; /* سطرين بس */
+        -webkit-line-clamp: 2; /*two lines only*/
         -webkit-box-orient: vertical;  
         overflow: hidden;
         text-overflow: ellipsis;
         
-        /* الحلين دول هما اللي هيصلحوا خروج النص بره الكادر */
-        word-break: break-all; /* بيكسر الكلمات الطويلة جداً */
+        word-break: break-all;
         overflow-wrap: break-word; 
         
-        flex: 1; /* عشان ياخد المساحة المتاحة ويسيب مكان للزرار */
+        flex: 1; 
     }
 
-    /* تنسيق زرار المسح عشان يفضل مكانه وشكله شيك */
     .delete-btn {
         min-width: 70px;
         z-index: 10;
@@ -116,7 +114,9 @@ $result = mysqli_query($conn, $sql);
                             <p class="note-content-preview mb-0 text-dark"><?php echo htmlspecialchars($row['Content']); ?></p>
                         </div>
                         <div class="ms-3">
-                            <a href="index.php?delete=<?php echo $row['NoteID']; ?>" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); return confirm('Delete this note?')">Delete</a>
+                            <!-- sending note id to current card to delete - get method -->
+                            <a href="index.php?delete=<?php echo $row['NoteID']; ?>" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation();
+                             return confirm('Delete this note?')">Delete</a>
                         </div>
                     </div>
                 </div>
@@ -126,19 +126,16 @@ $result = mysqli_query($conn, $sql);
 </div>
 
 <script>
-    // وظيفة بتنقل الكلام للفورم فوق عشان تعدله
     function editNote(id, content) {
         document.getElementById('note_id').value = id;
         document.getElementById('note_text').value = content;
         document.getElementById('form-title').innerText = "Edit Note";
         document.getElementById('cancel-btn').style.display = "block";
         
-        // نطلع بالصفحة لفوق عشان اليوزر ياخد باله إن الكلام ظهر في الفورم
         window.scrollTo({ top: 0, behavior: 'smooth' });
         document.getElementById('note_text').focus();
     }
 
-    // وظيفة بترجع الفورم لوضعه الطبيعي (إضافة)
     function resetForm() {
         document.getElementById('note_id').value = "";
         document.getElementById('note_text').value = "";
